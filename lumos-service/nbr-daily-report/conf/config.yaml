@@ -1,0 +1,101 @@
+
+collectorURL : http://10.100.10.148:8081/nbrdailyreport/post
+
+rdbms :
+  url : 10.100.25.10:1521/awctgfo
+  username : sys
+  password : welcome1
+
+reqportGeneratedDateSQL : SELECT TO_CHAR(sysdate, 'DD-MON-YYYY HH24:MI:SS') FROM dual
+
+databaseStatusSQL : SELECT  DB_UNIQUE_NAME,open_mode,log_mode,current_scn, flashback_on FROM v$database
+
+databaseUPTimeSQL : >
+     SELECT 'The database ' || instance_name || ' has been running since ' ||
+     to_char(startup_time, 'HH24:MI MM/DD/YYYY') "DATABASE UP TIME" FROM v$instance
+
+tablespaceSQL : >
+      SELECT /* + RULE */ df.tablespace_name "Tablespace",
+      df.bytes / (1024 * 1024) "Size (MB)",
+      SUM(fs.bytes) / (1024 * 1024) "Free (MB)",
+      Nvl(Round(SUM(fs.bytes) * 100 / df.bytes),1) "% Free",
+      Round((df.bytes - SUM(fs.bytes)) * 100 / df.bytes) "% Used"
+      FROM dba_free_space fs,
+      (SELECT tablespace_name,SUM(bytes) bytes
+      FROM dba_data_files
+      GROUP BY tablespace_name) df
+      WHERE fs.tablespace_name (+) = df.tablespace_name
+      GROUP BY df.tablespace_name,df.bytes
+      UNION ALL
+      SELECT /* + RULE */ df.tablespace_name tspace,
+      fs.bytes / (1024 * 1024),
+      SUM(df.bytes_free) / (1024 * 1024),
+      Nvl(Round((SUM(fs.bytes) - df.bytes_used) * 100 / fs.bytes), 1),
+      Round((SUM(fs.bytes) - df.bytes_free) * 100 / fs.bytes)
+      FROM dba_temp_files fs,
+      (SELECT tablespace_name,bytes_free,bytes_used
+      FROM v$temp_space_header
+      GROUP BY tablespace_name,bytes_free,bytes_used) df
+      WHERE fs.tablespace_name (+) = df.tablespace_name
+      GROUP BY df.tablespace_name,fs.bytes,df.bytes_free,df.bytes_used
+      ORDER BY 4 DESC
+
+primarySequenceSQL : >
+      select thread# as threadName, max(sequence#) as sequenceNo
+      from v$archived_log val, v$database vdb
+      where val.resetlogs_change# = vdb.resetlogs_change#
+      group by thread# order by 1
+
+standbySequenceReceivedSQL : >
+      select thread# as threadName, max(sequence#) as sequenceNo
+      from v$archived_log val, v$database vdb
+      where val.resetlogs_change# = vdb.resetlogs_change#
+      group by thread# order by 1
+
+standbySequenceAppliedSQL : >
+      select thread# as threadName, max(sequence#) as sequenceNo
+      from v$archived_log val, v$database vdb
+      where val.resetlogs_change# = vdb.resetlogs_change#
+      and applied='YES'
+      group by thread# order by 1
+
+dataGuardGapStatusSQL : >
+      select THREAD# as threadName,  LOW_SEQUENCE# as lowSequence, HIGH_SEQUENCE# as highSequence
+      from v$archive_gap
+
+dataGuardProcessStatusSQL : >
+      SELECT PROCESS as process, THREAD# as threadName, sequence# as sequenceNo, status as stat
+      FROM V$MANAGED_STANDBY
+      WHERE PROCESS LIKE 'MRP%'
+
+dataGuardErrorLastOneHourSQL : >
+      select DISTINCT  message_text as msgTxt,to_char(ORIGINATING_TIMESTAMP,'HH24:MI:SS') as sTime
+      from sys.x$dbgalertext
+      where originating_timestamp >  sysdate-1/24 and message_text like '%CORRUPTION DETECTED%'
+      order by 1
+
+alertLogErrorLastOneDaySQL : >
+      select  DISTINCT  message_text as msgTxt, to_char(ORIGINATING_TIMESTAMP,'HH24:MI:SS') as sTime
+      from sys.x$dbgalertext
+      where originating_timestamp >  sysdate-1 and message_text like '%ORA-%'
+      order by 1
+
+rmanBackupInformationSQL : >
+      select SESSION_KEY as sKey, INPUT_TYPE as iType, STATUS as stat, to_char(START_TIME,'mm/dd/yy hh24:mi') as sTime,
+      to_char(END_TIME,'mm/dd/yy hh24:mi') as eTime, (elapsed_seconds/3600) as hrs
+      from V$RMAN_BACKUP_JOB_DETAILS
+      where INPUT_TYPE in ('DB FULL','ARCHIVELOG')
+      order by session_key
+
+dbNodeBackupStatusSQL : >
+      select to_char(ctime,'mm/dd/yy') as cTime,
+      decode(backup_type, 'L', 'Archive Log', 'D', 'Full', 'Incremental') as backupType,
+      bsize as sizeInGB
+      from (select trunc(bp.completion_time) ctime,
+      backup_type, round(sum(bp.bytes/1024/1024/1024),2) bsize
+      from v$backup_set bs, v$backup_piece bp
+      where bs.set_stamp = bp.set_stamp
+      and bs.set_count  = bp.set_count
+      and bp.status = 'A'
+      group by trunc(bp.completion_time), backup_type)
+      order by 1, 2

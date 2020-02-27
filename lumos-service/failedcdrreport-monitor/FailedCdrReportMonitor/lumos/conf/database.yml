@@ -1,0 +1,7 @@
+oracle:
+    host : uniVergeDTL/uniVergeDTL@dbrac-scan:1521/secldb.spectrum-bd.com
+    user : uniVergeDTL
+    password : uniVergeDTL
+    sql : >
+        select ratingfailurereason, sequenceNumber, callingPartyID, calledPartyID, originatingDateTime, disconnectDateTime, callDuration, origtrunkgroupclli, termtrunkgroupclli
+        from failedminvcdr where originatingDatetime between to_date('Yesterday 00:00:00', 'YYYY-MM-DD HH24:MI:SS') and to_date('Yesterday 23:59:59', 'YYYY-MM-DD HH24:MI:SS')

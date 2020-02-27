@@ -1,0 +1,11 @@
+oracle:
+    host : "192.168.0.138"
+    user : sys
+    password : sys123
+    port: "1521"
+    sid: "orcldb"
+    url : 192.168.0.138:1521/orcldb
+
+monitor:
+#    url : http://192.168.5.127:8081/oracletablespace/post
+     url : http://192.168.2.51:8081/nbrdailyreport/post

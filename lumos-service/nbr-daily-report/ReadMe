@@ -1,0 +1,49 @@
+*Requirements-
+
+1. Install Oracle instant client 11.2
+   Refrence: https://gist.github.com/kimus/10012910
+   Refrence: http://www.oracle.com/technetwork/database/features/instant-client/index-097480.html
+2. Install cx_Oracle
+   Refrence: https://gist.github.com/kimus/10012910 
+
+   
+------------------------------------------------- Install Python3.5.2 -------------------------------------------------
+1. Login as root user
+2. mkdir /root/software/python
+3. cd /root/software/python
+4. wget https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tgz
+5. tar -xvf Python-3.5.2.tgz
+6. cd /root/software/python/Python-3.5.2
+7. ./configure
+8. make
+9. make install
+10. ls /usr/local/bin/ to check install python3.5
+
+----------------------------- Change python version on per user basis -----------------------
+1. cd
+2. vim .bashrc
+3. alias python='/usr/localh/bin/python3.5'
+
+----------------------------- Change python version system-wide -----------------------
+update-alternatives --install /usr/bin/python python /usr/bin/python2.6 1
+update-alternatives --install /usr/bin/python python /usr/local/bin/python3.5 2
+-- To set Priority
+update-alternatives --config python
+-- To remove
+update-alternatives --remove python /usr/bin/python3.5
+
+More Details :
+1. https://linuxconfig.org/how-to-change-from-default-to-alternative-python-version-on-debian-linux
+2. http://askubuntu.com/questions/701375/how-can-i-uninstall-python3-5-0-installed-from-source-code
+
+------------------------------------------------- Install cx_Oracle -------------------------------------------------
+1. Login as root user
+2. mkdir /root/software/python
+3. cd /root/software/python
+4. wget https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tgz
+5. tar -xvf Python-3.5.2.tgz
+6. cd /root/software/python/Python-3.5.2
+7. ./configure
+8. make
+9. make install
+10. ls /usr/local/bin/ to check install python3.5
